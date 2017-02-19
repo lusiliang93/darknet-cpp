@@ -5,7 +5,7 @@ Darknet-cpp project is a bug-fixed and C++ compilable version of darknet, an ope
 
 **Features**
 
-* try object detection and background subtraction for motion detection
+* try object detection and background subtraction for motion detection (new!!)
 
 * Uses same code-base as original darknet (ie same .c files are used). Modification is done only for runtime bug-fixes, compile time fixes for c++, and the build system itself. For list of bugs fixed, refer to this thread - https://groups.google.com/forum/#!topic/darknet/4Hb159aZBbA, and https://github.com/prabindh/darknet/issues
 
