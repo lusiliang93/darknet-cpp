@@ -6,7 +6,7 @@
 
 #ifdef OPENCV
 #include "opencv2/highgui/highgui_c.h"
-image get_image_from_stream(CvCapture *cap);
+image get_image_from_stream(IplImage *src);
 image ipl_to_image(IplImage* src);
 
 void reconstruct_picture(network net, float *features, image recon, image update, float rate, float momentum, float lambda, int smooth_size, int iters);
@@ -165,7 +165,8 @@ void generate_vid_rnn(char *cfgfile, char *weightfile)
     float *next;
     image last;
     for(i = 0; i < 25; ++i){
-        image im = get_image_from_stream(cap);
+        IplImage *src = cvQueryFrame(cap);
+        image im = get_image_from_stream(src);
         image re = resize_image(im, extractor.w, extractor.h);
         feat = network_predict(extractor, re.data);
         if(i > 0){

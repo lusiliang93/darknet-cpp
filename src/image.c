@@ -508,9 +508,10 @@ image load_image_cv(char *filename, int channels)
     return out;
 }
 
-image get_image_from_stream(CvCapture *cap)
+//image get_image_from_stream(CvCapture *cap)
+image get_image_from_stream(IplImage* src)
 {
-    IplImage* src = cvQueryFrame(cap);
+    //IplImage* src = cvQueryFrame(cap);
     if (!src) return make_empty_image(0,0,0);
     image im = ipl_to_image(src);
     rgbgr_image(im);
