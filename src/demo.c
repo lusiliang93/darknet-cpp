@@ -75,15 +75,18 @@ bool bShadowDetection = false;
 void *fetch_in_thread(void *ptr)
 {
     src = cvQueryFrame(cap);
+    frame1 = cvarrToMat(src);
     in = get_image_from_stream(src);
     //img = cvQueryFrame(cap);
     if(!in.data){
         fprintf(output,"The number of total frames:%d\n",count_f);
         fclose(output);
         //activity level calssification
-        if(is_active > count_f* .75){
+        if(is_active > count_f* .75)
             printf("This sample is classified as acitve!!\n");
-        }
+        else 
+            print("This sample is classified as nonactive!!\n");
+        
         error("Stream closed.");
     }
     in_s = resize_image(in, net.w, net.h);
@@ -156,16 +159,16 @@ void *bg_sub_in_thread(void *ptr){
         //    exit(EXIT_FAILURE);
         //}
     //IplImage *img = cvQueryFrame(cap);
-    frame1 = cvarrToMat(src);
+    //frame1 = cvarrToMat(src);
     //update the background model
         //pMOG2->apply(frame, fgMaskMOG2);
         //printf("correct?\n");
         pMOG2->operator()(frame1,fgMaskMOG2);
         //printf("correct?\n");
         int total_pixel = fgMaskMOG2.rows * fgMaskMOG2.cols;
-        int zero_pixel = total_pixel - countNonZero(fgMaskMOG2);
+        //int zero_pixel = total_pixel - countNonZero(fgMaskMOG2);
         // percent of foreground with detected people based on areas of all detected persons
-        double percent = (double) zero_pixel / (double) total_area; 
+        double percent = (double) countNonZero(fgMaskMOG2) / (double) total_area; 
         printf("percent of foreground: %f\n",percent);
         //to do, evaluation metrics => if...
         if(percent > 0.75)
@@ -272,7 +275,7 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
         //printf("frame ID:%d\n",count);
         if(1){
             if(pthread_create(&fetch_thread, 0, fetch_in_thread, 0)) error("Thread creation failed");
-            //if(count%2==0){
+            //if(count%4==0){
                 if(pthread_create(&detect_thread, 0, detect_in_thread, 0)) error("Thread creation failed");
             //}
             if(pthread_create(&bg_sub_thread, 0, bg_sub_in_thread, 0)) error("Thread creation failed");
