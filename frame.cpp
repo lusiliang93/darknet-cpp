@@ -9,26 +9,20 @@
 using namespace cv;
 using namespace std;
 
-int main(int, char **)
+string skipping_frame(char *filename,int n)
 {
-	VideoCapture cap("seat.mp4");
+	VideoCapture cap(filename);
 
 	if(!cap.isOpened())
 		return -1;
 	Mat src;
     cap >> src;
-    //cvtColor(src,src,CV_BGR2GRAY);
-    //pyrDown(src,src,Size(src.cols/2,src.rows/2));
- //    int frame1=0;
-	// frame1 = (int) cap.get(CV_CAP_PROP_FRAME_COUNT);
-	// printf("frame number:%d\n",frame1);
-    //bool isColor = (src.type() == CV_8UC3);
 
     //--- INITIALIZE VIDEOWRITER
     VideoWriter writer;
     int codec = CV_FOURCC('M', 'J', 'P', 'G');  // select desired codec (must be available at runtime)
     double fps = 25.0;                          // framerate of the created video stream
-    string filename = "./seat.avi";             // name of the output video file
+    string filename = "./seat.avi";             // name of the output video file //change!!
     writer.open(filename, codec, fps, src.size(), true);
     // check if we succeeded
     if (!writer.isOpened()) {
@@ -46,10 +40,8 @@ int main(int, char **)
         if (src.empty()) {
              break;
          }
-        //cvtColor(src,src,CV_BGR2GRAY);
-        //pyrDown(src,src,Size(src.cols/2,src.rows/2));
         // encode the frame into the videofile strea
-        if(i % 2 == 0)
+        if(i % n == 0)
             writer << src;
         i++;
         printf("count:%d\n",i);
@@ -62,5 +54,5 @@ int main(int, char **)
 
 	writer.release();
 	cout << "Finished writing" << endl;
-	return 0;
+	return filename;
 }
