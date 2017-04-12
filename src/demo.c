@@ -85,7 +85,7 @@ void *fetch_in_thread(void *ptr)
         if(is_active > count_f* .75)
             printf("This sample is classified as acitve!!\n");
         else 
-            print("This sample is classified as nonactive!!\n");
+            printf("This sample is classified as nonactive!!\n");
         
         error("Stream closed.");
     }
