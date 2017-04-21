@@ -8,6 +8,7 @@
 #include "image.h"
 #include "demo.h"
 #include <sys/time.h>
+#include <unistd.h>
 
 #define FRAMES 3
 
@@ -62,6 +63,9 @@ static FILE *output;
 static int count_f;
 // count the active frame
 static int is_active=0;
+//slow down the frame rate when necessary
+static double target_frame_rate;
+static double target_frame_time;
 
 // Global variables for background subtraction
 Mat frame1; //current frame
@@ -78,15 +82,27 @@ void *fetch_in_thread(void *ptr)
     frame1 = cvarrToMat(src);
     in = get_image_from_stream(src);
     //img = cvQueryFrame(cap);
+
+    //hardcode is not good!
+    if(count_f > 700){
+       if(is_active > count_f * .75){
+           fprintf(output,"This sample is classified as active!!");
+           fclose(output);
+       }
+       else{
+           fprintf(output,"This sample is classified as nonactive!!");
+           fclose(output);
+       }
+    }
+
     if(!in.data){
         fprintf(output,"The number of total frames:%d\n",count_f);
-        fclose(output);
         //activity level calssification
         if(is_active > count_f* .75)
-            printf("This sample is classified as acitve!!\n");
+            fprintf(output,"This sample is classified as acitve!!\n");
         else 
-            printf("This sample is classified as nonactive!!\n");
-        
+            fprintf(output,"This sample is classified as nonactive!!\n");
+        fclose(output);
         error("Stream closed.");
     }
     in_s = resize_image(in, net.w, net.h);
@@ -213,6 +229,7 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
         //cap1 = VideoCapture(filename);
         //the total frames of the video
         frame = (int)cvGetCaptureProperty(cap,CV_CAP_PROP_FRAME_COUNT);
+       printf("total frame:%d\n",frame);
         //allocate the array by doubling the frame number
         countpv = (int*)calloc(2*frame,sizeof(int));
     }else{
@@ -220,6 +237,9 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
     }
 
     if(!cap) error("Couldn't connect to webcam.\n");
+    target_frame_rate = cvGetCaptureProperty(cap,CV_CAP_PROP_FPS);
+    target_frame_time = 1.0/target_frame_rate;
+    printf("target frame rate:%f\n",target_frame_rate);
 
     layer l = net.layers[net.n-1];
     int j;
@@ -272,13 +292,13 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
     while(1){
         ++count;
         ++count_f;
-        //printf("frame ID:%d\n",count);
+        printf("frame ID:%d\n",count);
         if(1){
-            if(pthread_create(&fetch_thread, 0, fetch_in_thread, 0)) error("Thread creation failed");
-            //if(count%4==0){
+                if(pthread_create(&fetch_thread, 0, fetch_in_thread, 0)) error("Thread creation failed");
+            if(count%2==0){
                 if(pthread_create(&detect_thread, 0, detect_in_thread, 0)) error("Thread creation failed");
-            //}
-            if(pthread_create(&bg_sub_thread, 0, bg_sub_in_thread, 0)) error("Thread creation failed");
+                if(pthread_create(&bg_sub_thread, 0, bg_sub_in_thread, 0)) error("Thread creation failed");
+           }
 
             //store number of people
             printf("the number of people:%d\n",countp);
@@ -302,13 +322,13 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
                 sprintf(buff, "%s_%08d", prefix, count);
                 save_image(disp, buff);
             }
-        
-            pthread_join(fetch_thread, 0);
+            
+                pthread_join(fetch_thread, 0);
             //printf("correct?\n");
-            //if(count%2==0){
-            pthread_join(detect_thread, 0);
-            //}
-            pthread_join(bg_sub_thread,0);
+            if(count%2==0){
+                pthread_join(detect_thread, 0);
+                pthread_join(bg_sub_thread,0);
+            }
 
             if(delay == 0){
                 free_image(disp);
@@ -335,6 +355,18 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
             double after = get_wall_time();
             float curr = 1./(after - before);
             fps = curr;
+
+            // hardcode is not good
+            /** if(count > 700){
+            It is not because the speed but memory
+            //usleep((after - before)+200000);
+                if(is_active > count_f*.75)
+                   fprintf(output,"This sample is classified as active!!");
+                else 
+                   fprintf(output,"This sample is classified as nonactive!!");
+                fclose(output);
+            }
+            **/
             before = after;
         }
     }
